@@ -1,5 +1,7 @@
 import { Variants } from "framer-motion";
 
+// ─── Entry Variants ────────────────────────────────────────────────────────
+
 export const fadeUp: Variants = {
     hidden: { opacity: 0, y: 40 },
     visible: {
@@ -36,6 +38,8 @@ export const scaleIn: Variants = {
     },
 };
 
+// ─── Stagger Containers ────────────────────────────────────────────────────
+
 export const staggerContainer: Variants = {
     hidden: {},
     visible: {
@@ -56,5 +60,47 @@ export const staggerContainerFast: Variants = {
     },
 };
 
-/** Common viewport config — fires once when 15% of element is visible */
+// ─── NEW — Clip-path wipe (bottom-to-top reveal) ───────────────────────────
+
+export const clipWipe: Variants = {
+    hidden: { clipPath: "inset(100% 0 0 0)", opacity: 0 },
+    visible: {
+        clipPath: "inset(0% 0 0 0)",
+        opacity: 1,
+        transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+    },
+};
+
+// ─── NEW — 3D rotateY flips ────────────────────────────────────────────────
+
+export const flipLeft: Variants = {
+    hidden: { rotateY: -90, opacity: 0 },
+    visible: {
+        rotateY: 0,
+        opacity: 1,
+        transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
+    },
+};
+
+export const flipRight: Variants = {
+    hidden: { rotateY: 90, opacity: 0 },
+    visible: {
+        rotateY: 0,
+        opacity: 1,
+        transition: { duration: 0.9, ease: [0.22, 1, 0.36, 1] },
+    },
+};
+
+// ─── NEW — Scramble config ─────────────────────────────────────────────────
+
+export const scrambleConfig = {
+    chars: "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    interval: 40,   // ms between each glyph swap
+    staggerMs: 60,  // ms delay per character index
+    cycles: 6,      // how many random glyphs before settling
+} as const;
+
+// ─── Viewport ─────────────────────────────────────────────────────────────
+
+/** Common viewport config — fires once when 15 % of element is visible */
 export const viewport = { once: true, amount: 0.15 } as const;

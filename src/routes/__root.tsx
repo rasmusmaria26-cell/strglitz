@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
-import { LazyMotion, domAnimation } from "framer-motion";
+import { ScrollProgress } from "../components/ScrollProgress";
+import { Intro } from "../components/Intro";
 
 import appCss from "../styles.css?url";
 
@@ -64,5 +65,11 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  return <Outlet />;
+  return (
+    <>
+      <ScrollProgress />
+      <Intro />
+      <Outlet />
+    </>
+  );
 }

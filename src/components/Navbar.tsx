@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 
 const links = [
@@ -10,10 +10,14 @@ const links = [
   { href: "#contact", label: "Contact" },
 ];
 
+const sectionIds = ["about", "content", "reels", "business", "contact"];
+
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
 
+  // ── Scroll collapse ───────────────────────────────────────────────────
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -21,16 +25,35 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // ── Active section via IntersectionObserver ───────────────────────────
+  useEffect(() => {
+    const observers: IntersectionObserver[] = [];
+    sectionIds.forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveSection(id);
+        },
+        { threshold: 0.4 },
+      );
+      obs.observe(el);
+      observers.push(obs);
+    });
+    return () => observers.forEach((o) => o.disconnect());
+  }, []);
+
   return (
     <>
-      {/* Main navbar — slides down on load */}
       <motion.header
-        className={`fixed inset-x-0 top-0 z-50 flex justify-center transition-all duration-500 ${scrolled ? "py-4" : "py-6"}`}
+        className={`fixed inset-x-0 top-0 z-50 flex justify-center transition-all duration-500 ${scrolled ? "py-4" : "py-6"
+          }`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       >
         <div
-          className={`flex w-full items-center justify-between px-6 transition-all duration-500 ${scrolled ? "glass-card mx-4 max-w-5xl rounded-full py-2.5" : "mx-auto container"
+          className={`flex w-full items-center justify-between px-6 transition-all duration-500 ${scrolled ? "glass-card mx-4 max-w-5xl rounded-full py-2.5" : "container mx-auto"
             }`}
         >
           {/* Logo */}
@@ -44,22 +67,33 @@ export function Navbar() {
             </motion.span>
           </a>
 
-          {/* Desktop nav */}
-          <nav className="hidden items-center gap-8 md:flex">
-            {links.map((l) => (
-              <motion.a
-                key={l.href}
-                href={l.href}
-                className="text-sm font-medium text-muted-foreground"
-                whileHover={{ color: "oklch(0.96 0.01 80)", y: -1 }}
-                transition={{ duration: 0.15 }}
-              >
-                {l.label}
-              </motion.a>
-            ))}
+          {/* Desktop nav with sliding pill */}
+          <nav className="relative hidden items-center gap-1 md:flex">
+            {links.map((l) => {
+              const isActive = activeSection === l.href.slice(1);
+              return (
+                <a
+                  key={l.href}
+                  href={l.href}
+                  className="relative px-4 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="nav-pill"
+                      className="absolute inset-0 rounded-full"
+                      style={{
+                        background: "oklch(0.82 0.14 78 / 12%)",
+                        border: "1px solid oklch(0.82 0.14 78 / 30%)",
+                      }}
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                  <span className="relative z-10">{l.label}</span>
+                </a>
+              );
+            })}
           </nav>
 
-          {/* Right side actions */}
           <div className="flex items-center gap-3">
             <motion.a
               href="https://instagram.com/itzz_abbu"
@@ -72,7 +106,7 @@ export function Navbar() {
               Follow
             </motion.a>
 
-            {/* Hamburger — mobile only */}
+            {/* Hamburger */}
             <motion.button
               className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-muted-foreground md:hidden"
               onClick={() => setOpen((o) => !o)}
@@ -95,7 +129,7 @@ export function Navbar() {
         </div>
       </motion.header>
 
-      {/* Mobile full-screen drawer */}
+      {/* Mobile drawer */}
       <AnimatePresence>
         {open && (
           <motion.div

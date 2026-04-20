@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { TrendingUp, Award, Users, Briefcase } from "lucide-react";
 import { fadeUp, scaleIn, staggerContainer, viewport } from "@/lib/motion";
+import { useState } from "react";
 
 const items = [
   { icon: TrendingUp, title: "Viral Growth", text: "Multiple viral Instagram videos in 2024 reaching millions of viewers." },
@@ -9,7 +10,14 @@ const items = [
   { icon: Briefcase, title: "Fashion Entrepreneur", text: "Founder of VAT's — building two successful clothing brands in under a year." },
 ];
 
+const orbitKeyframes = {
+  x: [0, 3, 0, -3, 0],
+  y: [0, -3, 0, 3, 0],
+};
+
 export function Achievements() {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
   return (
     <section id="achievements" className="relative py-32">
       <div className="container mx-auto px-6">
@@ -33,27 +41,37 @@ export function Achievements() {
           whileInView="visible"
           viewport={viewport}
         >
-          {items.map((item) => {
+          {items.map((item, i) => {
             const Icon = item.icon;
+            const isHovered = hoveredIdx === i;
+
             return (
               <motion.div
                 key={item.title}
                 variants={scaleIn}
                 whileHover={{
                   y: -4,
-                  borderColor: "var(--color-primary)",
+                  borderColor: "oklch(0.82 0.14 78 / 50%)",
                   backgroundColor: "oklch(0.18 0.012 60 / 70%)",
                 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="group flex gap-5 rounded-2xl border border-border/60 bg-card/40 p-6 cursor-default"
+                onHoverStart={() => setHoveredIdx(i)}
+                onHoverEnd={() => setHoveredIdx(null)}
+                className="group flex cursor-default gap-5 rounded-2xl border border-border/60 bg-card/40 p-6"
               >
+                {/* Orbit animation on hover */}
                 <motion.div
                   className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
-                  whileHover={{ scale: 1.15, rotate: 8 }}
-                  transition={{ type: "spring", stiffness: 400 }}
+                  animate={isHovered ? orbitKeyframes : { x: 0, y: 0 }}
+                  transition={
+                    isHovered
+                      ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
+                      : { duration: 0.3 }
+                  }
                 >
                   <Icon className="h-6 w-6" />
                 </motion.div>
+
                 <div>
                   <h3 className="font-display text-xl font-bold">{item.title}</h3>
                   <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{item.text}</p>

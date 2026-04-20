@@ -1,6 +1,66 @@
 import { motion } from "framer-motion";
 import { Instagram, Mail, Handshake, Youtube } from "lucide-react";
-import { fadeUp, scaleIn, staggerContainer, viewport } from "@/lib/motion";
+import { fadeUp, scaleIn, staggerContainer, viewport, scrambleConfig } from "@/lib/motion";
+import { useEffect, useState, useRef } from "react";
+
+// ─── Scramble hook (same pattern as Hero) ─────────────────────────────────
+
+function useScramble(text: string, active: boolean) {
+  const [displayed, setDisplayed] = useState(text);
+
+  useEffect(() => {
+    if (!active) return;
+    const { chars, cycles, interval, staggerMs } = scrambleConfig;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+
+    text.split("").forEach((finalChar, charIdx) => {
+      let count = 0;
+      const start = setTimeout(() => {
+        const tick = setInterval(() => {
+          setDisplayed((prev) => {
+            const arr = prev.split("");
+            arr[charIdx] =
+              count < cycles
+                ? chars[Math.floor(Math.random() * chars.length)]
+                : finalChar;
+            return arr.join("");
+          });
+          count++;
+          if (count > cycles) clearInterval(tick);
+        }, interval);
+        timers.push(tick as unknown as ReturnType<typeof setTimeout>);
+      }, charIdx * staggerMs);
+      timers.push(start);
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, [active, text]);
+
+  return displayed;
+}
+
+// ─── Scramble Headline ────────────────────────────────────────────────────
+
+function ScrambleWord({ word }: { word: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [active, setActive] = useState(false);
+  const displayed = useScramble(word, active);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) { setActive(true); obs.disconnect(); }
+      },
+      { threshold: 0.8 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  return <span ref={ref} className="text-gold italic">{displayed}</span>;
+}
 
 const links = [
   { href: "https://instagram.com/itzz_abbu", icon: Instagram, label: "@itzz_abbu", primary: true },
@@ -19,7 +79,6 @@ export function Contact() {
           whileInView="visible"
           viewport={viewport}
         >
-          {/* Pulsing background orb */}
           <motion.div
             className="absolute -top-32 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl"
             animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.7, 0.4] }}
@@ -27,22 +86,16 @@ export function Contact() {
           />
 
           <div className="relative text-center">
-            <motion.p
-              className="mb-3 text-xs uppercase tracking-[0.3em] text-primary"
-              variants={fadeUp}
-            >
+            <motion.p variants={fadeUp} className="mb-3 text-xs uppercase tracking-[0.3em] text-primary">
               Let's Connect
             </motion.p>
             <motion.h2
+              variants={fadeUp}
               className="font-display text-4xl font-bold sm:text-5xl lg:text-6xl"
-              variants={fadeUp}
             >
-              Open for <span className="text-gold italic">Collaborations</span>
+              Open for <ScrambleWord word="Collaborations" />
             </motion.h2>
-            <motion.p
-              className="mx-auto mt-5 max-w-xl text-muted-foreground"
-              variants={fadeUp}
-            >
+            <motion.p variants={fadeUp} className="mx-auto mt-5 max-w-xl text-muted-foreground">
               Brand partnerships, promotions, or just a hello — reach out through any of the channels below.
             </motion.p>
 

@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Crown, Shirt } from "lucide-react";
-import { fadeLeft, fadeRight, fadeUp, viewport } from "@/lib/motion";
+import { flipLeft, flipRight, fadeUp, viewport } from "@/lib/motion";
 
 export function Business() {
   return (
@@ -19,14 +19,16 @@ export function Business() {
           </h2>
         </motion.div>
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          {/* VAT's Men Wear */}
+        {/* Perspective wrapper for 3D flip depth */}
+        <div style={{ perspective: "1200px" }} className="grid gap-6 lg:grid-cols-2">
+          {/* VAT's Men Wear – flip from left */}
           <motion.div
             className="group glass-card relative overflow-hidden rounded-3xl p-10"
-            variants={fadeLeft}
+            variants={flipLeft}
             initial="hidden"
             whileInView="visible"
             viewport={viewport}
+            style={{ transformOrigin: "right center" }}
             whileHover={{ y: -6 }}
             transition={{ type: "spring", stiffness: 250, damping: 20 }}
           >
@@ -51,18 +53,19 @@ export function Business() {
             </div>
           </motion.div>
 
-          {/* VAT's Queen */}
+          {/* VAT's Queen – flip from right */}
           <motion.div
             className="group glass-card relative overflow-hidden rounded-3xl p-10"
-            variants={fadeRight}
+            variants={flipRight}
             initial="hidden"
             whileInView="visible"
             viewport={viewport}
+            style={{ transformOrigin: "left center" }}
             whileHover={{ y: -6 }}
             transition={{ type: "spring", stiffness: 250, damping: 20 }}
           >
             <motion.div
-              className="absolute -left-20 -bottom-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl"
+              className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-accent/15 blur-3xl"
               animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.7, 0.4] }}
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
             />

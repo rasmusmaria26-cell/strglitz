@@ -1,6 +1,11 @@
-import { motion } from "framer-motion";
-import { useInView } from "@/hooks/use-in-view";
-import { fadeUp, staggerContainerFast, viewport } from "@/lib/motion";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  useTransform,
+} from "framer-motion";
+import { useRef } from "react";
+import { clipWipe, staggerContainerFast, fadeUp, viewport } from "@/lib/motion";
 
 const reels = [
   { tag: "Acting", id: "mZkXKke6DX4", href: "https://youtube.com/shorts/mZkXKke6DX4" },
@@ -11,10 +16,92 @@ const reels = [
   { tag: "Humanity", id: "yLxAwuO_QV8", href: "https://youtube.com/shorts/yLxAwuO_QV8" },
 ];
 
-const cardVariant = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
-};
+// ─── 3D tilt card ───────────────────────────────────────────────────────────
+
+function TiltCard({ reel }: { reel: typeof reels[0] }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const rawX = useMotionValue(0);
+  const rawY = useMotionValue(0);
+  const glossX = useMotionValue(50);
+  const glossY = useMotionValue(50);
+
+  const rotateX = useSpring(useTransform(rawY, [-1, 1], [8, -8]), { stiffness: 200, damping: 20 });
+  const rotateY = useSpring(useTransform(rawX, [-1, 1], [-8, 8]), { stiffness: 200, damping: 20 });
+
+  const handleMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = cardRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;  // -1 … 1
+    const ny = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+    rawX.set(nx);
+    rawY.set(ny);
+    glossX.set(((e.clientX - rect.left) / rect.width) * 100);
+    glossY.set(((e.clientY - rect.top) / rect.height) * 100);
+  };
+
+  const handleLeave = () => {
+    rawX.set(0);
+    rawY.set(0);
+    glossX.set(50);
+    glossY.set(50);
+  };
+
+  return (
+    <motion.div
+      ref={cardRef}
+      variants={clipWipe}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      style={{ rotateX, rotateY, transformPerspective: 800 }}
+      className="group relative overflow-hidden rounded-2xl border border-border bg-card"
+    >
+      {/* Tag */}
+      <div className="absolute left-3 top-3 z-10 rounded-full bg-background/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-foreground backdrop-blur-md">
+        {reel.tag}
+      </div>
+
+      {/* Gloss overlay */}
+      <motion.div
+        className="pointer-events-none absolute inset-0 z-10 rounded-2xl"
+        style={{
+          background: useTransform(
+            [glossX, glossY],
+            ([x, y]) =>
+              `radial-gradient(circle 140px at ${x}% ${y}%, oklch(1 0 0 / 6%), transparent)`,
+          ),
+        }}
+      />
+
+      {/* YouTube embed */}
+      <div className="aspect-[9/16] w-full">
+        <iframe
+          src={`https://www.youtube.com/embed/${reel.id}?rel=0&modestbranding=1`}
+          title={`${reel.tag} short`}
+          className="h-full w-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          loading="lazy"
+        />
+      </div>
+
+      {/* Watch link */}
+      <motion.a
+        href={reel.href}
+        target="_blank"
+        rel="noreferrer"
+        className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1.5 bg-gradient-to-t from-background/90 to-transparent px-3 py-4 text-xs font-semibold text-primary"
+        initial={{ opacity: 0 }}
+        whileHover={{ opacity: 1 }}
+      >
+        Open on YouTube ↗
+      </motion.a>
+    </motion.div>
+  );
+}
+
+// ─── Section ─────────────────────────────────────────────────────────────────
 
 export function Reels() {
   return (
@@ -46,6 +133,7 @@ export function Reels() {
           </motion.a>
         </motion.div>
 
+        {/* Clip-wipe stagger grid */}
         <motion.div
           className="grid grid-cols-2 gap-4 sm:gap-5 md:grid-cols-3"
           variants={staggerContainerFast}
@@ -54,40 +142,7 @@ export function Reels() {
           viewport={viewport}
         >
           {reels.map((reel) => (
-            <motion.div
-              key={reel.id}
-              variants={cardVariant}
-              whileHover={{ y: -6, boxShadow: "0 0 40px -10px oklch(0.82 0.14 78 / 50%)" }}
-              className="group relative overflow-hidden rounded-2xl border border-border bg-card"
-            >
-              {/* Tag pill */}
-              <div className="absolute left-3 top-3 z-10 rounded-full bg-background/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-foreground backdrop-blur-md">
-                {reel.tag}
-              </div>
-
-              {/* YouTube embed */}
-              <div className="aspect-[9/16] w-full">
-                <iframe
-                  src={`https://www.youtube.com/embed/${reel.id}?rel=0&modestbranding=1`}
-                  title={`${reel.tag} short`}
-                  className="h-full w-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  loading="lazy"
-                />
-              </div>
-
-              {/* Watch overlay */}
-              <motion.a
-                href={reel.href}
-                target="_blank" rel="noreferrer"
-                className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1.5 bg-gradient-to-t from-background/90 to-transparent px-3 py-4 text-xs font-semibold text-primary"
-                initial={{ opacity: 0 }}
-                whileHover={{ opacity: 1 }}
-              >
-                Open on YouTube ↗
-              </motion.a>
-            </motion.div>
+            <TiltCard key={reel.id} reel={reel} />
           ))}
         </motion.div>
       </div>
